@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MetricMind — Agentic Semantic BI Engine
 
 ## Folder structure
@@ -66,3 +67,7 @@ is compiled by `semantic_layer.build_query()`, which only allows metrics and
 dimensions defined in the `METRICS`/`DIMENSIONS` dictionaries. This is what
 prevents hallucinated joins or invented formulas — Finance and Sales always
 get the same number for "margin," no matter who asks.
+=======
+# Metricmind__01
+Agentic Semantic BI engine — translates natural language questions into governed SQL via a semantic layer, preventing LLM metric hallucination. Built with FastAPI, DuckDB, LangChain + Groq (Llama 3.3), and a Next.js + ECharts conversational UI.
+>>>>>>> 39ab0cc059652f2caa699eb56393f278f5dcc0bb
