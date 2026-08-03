@@ -1,73 +1,366 @@
-<<<<<<< HEAD
-# MetricMind — Agentic Semantic BI Engine
+# 📊 MetricMind – Agentic Semantic BI Engine
 
-## Folder structure
+MetricMind is an **Agentic Business Intelligence (BI) Engine** that converts natural language business questions into **governed SQL queries** through a semantic layer.
+
+Unlike traditional Text-to-SQL systems, MetricMind prevents LLM hallucinations by allowing the language model to interact only with predefined business metrics and dimensions. This ensures consistent, trustworthy analytics for enterprise reporting.
+
+---
+
+# 🚀 Features
+
+- 💬 Natural Language to Business Insights
+- 🧠 Agentic AI using LangChain
+- 📚 Semantic Layer with governed metrics
+- 🦆 DuckDB as the analytical database
+- ⚡ FastAPI backend
+- 🌐 Next.js frontend
+- 📈 Interactive charts with Apache ECharts
+- 🔒 Hallucination-safe SQL generation
+- 📝 Audit trail showing executed SQL and tool calls
+
+---
+
+# 🏗️ Architecture
+
+```text
+                User
+                  │
+                  ▼
+        Next.js Conversational UI
+                  │
+                  ▼
+            FastAPI Backend
+                  │
+                  ▼
+      LangChain Tool Calling Agent
+                  │
+      ┌───────────┴───────────┐
+      │                       │
+      ▼                       ▼
+ Semantic Layer          Business Rules
+      │
+      ▼
+     DuckDB
+      │
+      ▼
+ Enterprise Sales Dataset
 ```
-metricmind/
+
+---
+
+# 📂 Project Structure
+
+```text
+MetricMind__01/
+│
+├── agent/
+│   ├── orchestrator.py
+│   └── tools.py
+│
 ├── backend/
-│   ├── metricmind_enterprise_analytics_20k.csv   # your data
-│   ├── eda.py              # Step 0: EDA (Pandas)
-│   ├── db.py                # Step 1: Data Lakehouse (DuckDB)
-│   ├── semantic_layer.py    # Step 2: Semantic Layer (governed metrics)
-│   ├── agent.py              # Step 3: Agentic Orchestrator (LangChain/LLM)
-│   ├── charts.py             # Step 4: Data Visualization (Plotly)
-│   ├── main.py                # Step 5: REST API (FastAPI)
-│   └── requirements.txt
-└── frontend/
-    ├── package.json
-    └── app/page.tsx          # Step 6: Conversational BI UI (Next.js)
+│   ├── main.py
+│   └── schemas.py
+│
+├── data/
+│   ├── metricmind.duckdb
+│   └── metricmind_enterprise_analytics_20k.csv
+│
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── package.json
+│   └── next.config.ts
+│
+├── semantic_layer/
+│   ├── metrics.yaml
+│   └── semantic_engine.py
+│
+├── requirements.txt
+├── docker-compose.yml
+├── README.md
+└── .env
 ```
 
-## How to run
+---
 
-### 1. Backend
+# 🛠️ Tech Stack
+
+### Backend
+
+- Python 3.11
+- FastAPI
+- LangChain
+- DuckDB
+- Pandas
+- PyYAML
+- Pydantic
+
+### AI
+
+- LangChain Tool Calling Agent
+- Groq API (Llama 3.3 70B)
+- OpenAI (optional)
+
+### Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Apache ECharts
+
+---
+
+# ⚙️ Installation
+
+## 1. Clone Repository
+
 ```bash
-cd backend
+git clone https://github.com/jagadeesh1501/Metricmind__01.git
+
+cd Metricmind__01
+```
+
+---
+
+## 2. Create Virtual Environment
+
+Windows
+
+```bash
+py -3.11 -m venv .venv
+```
+
+Activate
+
+```bash
+.venv\Scripts\activate
+```
+
+---
+
+## 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-python eda.py                      # sanity-check the data first
-uvicorn main:app --reload          # starts API at http://localhost:8000
-```
-Test it:
-```bash
-curl http://localhost:8000/
-curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
-  -d "{\"question\":\"Why did our European margins drop last quarter?\"}"
 ```
 
-Without an `OPENAI_API_KEY` set, the agent uses a rule-based keyword planner
-(no cost, fully runnable). Set the key to switch on real LLM planning:
-```bash
-export OPENAI_API_KEY=sk-...
+---
+
+## 4. Configure Environment Variables
+
+Create a **.env** file.
+
+### Using Groq
+
+```env
+GROQ_API_KEY=your_groq_api_key
 ```
 
-### 2. Frontend
+### OR Using OpenAI
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+```
+
+---
+
+## 5. Run Backend
+
+```bash
+python -m uvicorn backend.main:app --reload
+```
+
+Backend runs at
+
+```
+http://127.0.0.1:8000
+```
+
+Swagger API
+
+```
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 6. Run Frontend
+
 ```bash
 cd frontend
 npm install
-npm run dev          # http://localhost:3000
+npm run dev
 ```
 
-## Skills demonstrated → file mapping
-| Skill | File |
-|---|---|
-| Pandas / EDA | `eda.py` |
-| SQL | `semantic_layer.py`, `db.py` |
-| DuckDB | `db.py` |
-| Semantic Layer Concepts | `semantic_layer.py` |
-| Agentic AI / LangChain / LLM Integration | `agent.py` |
-| Business Intelligence / KPI Design | `semantic_layer.py` (METRICS dict) |
-| FastAPI / REST APIs | `main.py` |
-| Plotly / Data Visualization | `charts.py` |
-| Next.js / Conversational BI UI | `frontend/app/page.tsx` |
+Frontend
 
-## The core guardrail (why this satisfies the brief)
-The LLM in `agent.py` never writes SQL. It only returns a JSON plan
-(`{"metric": "margin_pct", "filters": {"region": "Europe"}}`). The actual SQL
-is compiled by `semantic_layer.build_query()`, which only allows metrics and
-dimensions defined in the `METRICS`/`DIMENSIONS` dictionaries. This is what
-prevents hallucinated joins or invented formulas — Finance and Sales always
-get the same number for "margin," no matter who asks.
-=======
-# Metricmind__01
-Agentic Semantic BI engine — translates natural language questions into governed SQL via a semantic layer, preventing LLM metric hallucination. Built with FastAPI, DuckDB, LangChain + Groq (Llama 3.3), and a Next.js + ECharts conversational UI.
->>>>>>> 39ab0cc059652f2caa699eb56393f278f5dcc0bb
+```
+http://localhost:3000
+```
+
+---
+
+# 📊 API Endpoints
+
+## Health Check
+
+```
+GET /health
+```
+
+---
+
+## List Metrics
+
+```
+GET /metrics
+```
+
+Returns all governed metrics and dimensions.
+
+---
+
+## Query Semantic Layer
+
+```
+POST /metrics/query
+```
+
+Example
+
+```json
+{
+  "metrics": ["revenue"],
+  "group_by": ["country"]
+}
+```
+
+---
+
+## Chat with MetricMind
+
+```
+POST /chat
+```
+
+Example
+
+```json
+{
+  "question": "What is our total revenue?",
+  "chat_history": []
+}
+```
+
+---
+
+# 📈 Semantic Layer
+
+The semantic layer defines governed business metrics.
+
+Example metrics:
+
+- Revenue
+- Cost
+- Gross Margin
+- Margin %
+- Order Count
+
+Supported dimensions:
+
+- Country
+- Continent
+- Product Category
+- Quarter
+- Year
+
+The LLM never accesses database tables directly.
+
+---
+
+# 🔒 Governance
+
+MetricMind prevents SQL hallucinations through strict tool restrictions.
+
+The AI can only use three tools:
+
+- `list_metrics`
+- `explain_metric`
+- `query_metric`
+
+The LLM **cannot**:
+
+- Write SQL
+- Invent joins
+- Create new metrics
+- Modify business formulas
+
+All SQL is generated by the Semantic Layer.
+
+---
+
+# 💬 Example Questions
+
+- What is our total revenue?
+- Show revenue by country.
+- Which continent generated the highest revenue?
+- Explain margin percentage.
+- Why did European margins drop last quarter?
+- Compare quarterly revenue.
+- Show order count by product category.
+
+---
+
+# 📸 Screenshots
+
+Add screenshots here.
+
+Example:
+
+```
+docs/
+├── homepage.png
+├── chat.png
+├── dashboard.png
+```
+
+---
+
+# 🎯 Skills Demonstrated
+
+- Data Analytics
+- Business Intelligence
+- Semantic Layer Design
+- Agentic AI
+- LangChain
+- Prompt Engineering
+- FastAPI
+- REST APIs
+- DuckDB
+- SQL
+- Next.js
+- React
+- TypeScript
+- ECharts
+- Python
+
+---
+
+# 👨‍💻 Author
+
+**Jagadeesh**
+
+GitHub
+
+https://github.com/jagadeesh1501
+
+---
+
+# ⭐ Repository
+
+If you found this project useful, consider giving it a ⭐ on GitHub.
+
+```
+Star ⭐ the repository if you like the project!
+```
