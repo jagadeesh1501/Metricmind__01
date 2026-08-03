@@ -1,0 +1,22 @@
+{
+  "name": "metricmind-frontend",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^16.2.11",
+    "plotly.js": "2.34.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-plotly.js": "2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "7.0.2"
+  }
+}

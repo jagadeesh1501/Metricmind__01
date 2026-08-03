@@ -1,0 +1,9 @@
+pandas
+duckdb
+fastapi
+uvicorn
+plotly
+langchain
+langchain-openai
+openai
+python-dotenv
