@@ -17,3 +17,5 @@ def make_chart_json(rows: list[dict], metric: str, x_field: str = "quarter"):
     else:
         fig = px.bar(df, y=metric, title=metric.replace("_", " ").title())
     return fig.to_json()
+
+
