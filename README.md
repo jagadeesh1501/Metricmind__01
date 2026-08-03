@@ -1,6 +1,6 @@
 # 📊 MetricMind – Agentic Semantic BI Engine
 
-MetricMind is an **Agentic Business Intelligence (BI) Engine** that converts natural language business questions into **governed SQL queries** through a semantic layer.
+MetricMind is an **Agentic Business Intelligence (BI) Engine** that converts Natural Language business questions into **governed SQL queries** through a semantic layer.
 
 Unlike traditional Text-to-SQL systems, MetricMind prevents LLM hallucinations by allowing the language model to interact only with predefined business metrics and dimensions. This ensures consistent, trustworthy analytics for enterprise reporting.
 
