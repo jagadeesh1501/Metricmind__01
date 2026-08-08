@@ -1,0 +1,23 @@
+# MetricMind - local deployment
+# The backend serves the frontend itself (StaticFiles mount in main.py),
+# so a single service is enough for local dev. This mirrors the brief's
+# "Docker Compose for local deployment" without needing a separate
+# frontend build step (there's no Next.js build here — see README for
+# how to port frontend/ into a real Next.js app if you want SSR/routing).
+#
+# Run: docker compose up --build
+# Open: http://localhost:8000
+
+services:
+  metricmind-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    restart: unless-stopped
