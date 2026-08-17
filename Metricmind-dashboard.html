@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetricMind — Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#12151c; --panel-2:#161a23; --line:rgba(232,184,75,0.14);
+    --gold:#e8b84b; --gold-dim:#8a7332; --indigo:#7c6ff0; --indigo-dim:#4a4384;
+    --teal:#5ec9b8; --coral:#e0654f; --text:#ece8de; --muted:#868c9c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  #topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, var(--panel-2), var(--bg));position:sticky;top:0;z-index:10;}
+  #brand .mark{font-family:'Courier New',monospace;font-weight:700;font-size:18px;color:var(--gold);}
+  #brand .tag{font-size:11px;color:var(--muted);margin-left:10px;}
+  #status{display:flex;align-items:center;gap:12px;font-family:'Courier New',monospace;font-size:11px;}
+  #apiInput{background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:'Courier New',monospace;
+    font-size:11px;padding:6px 8px;border-radius:6px;width:200px;}
+  #apiInput:focus{outline:none;border-color:var(--gold);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;}
+  #status.connected .dot{background:var(--gold);box-shadow:0 0 6px var(--gold);}
+  #status.demo .dot{background:var(--indigo);box-shadow:0 0 6px var(--indigo);}
+
+  #controls{display:flex;gap:10px;flex-wrap:wrap;padding:16px 24px 0 24px;}
+  #controls select{background:var(--panel);border:1px solid var(--line);color:var(--text);
+    padding:8px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:12px;}
+  #controls button{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);padding:8px 14px;
+    border-radius:6px;font-family:'Courier New',monospace;font-size:11.5px;cursor:pointer;}
+  #controls button:hover{background:rgba(232,184,75,0.08);}
+
+  #kpiRow{display:grid;grid-template-columns:repeat(auto-fit, minmax(160px,1fr));gap:14px;padding:16px 24px;}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .kpi .label{font-family:'Courier New',monospace;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .kpi .value{font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:var(--gold);margin-top:6px;}
+
+  #grid{display:grid;grid-template-columns:1.3fr 1fr;grid-template-rows:auto auto;gap:16px;padding:0 24px 24px 24px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-height:300px;display:flex;flex-direction:column;}
+  .card h2{font-family:'Courier New',monospace;font-size:11.5px;letter-spacing:0.8px;color:var(--muted);text-transform:uppercase;margin:0 0 12px 0;}
+  .card .chartWrap{flex:1;position:relative;}
+  .demoflag{font-family:'Courier New',monospace;font-size:10px;color:var(--indigo);margin-top:8px;}
+
+  @media (max-width: 900px){ #grid{grid-template-columns:1fr;} #apiInput{width:120px;} }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="brand"><span class="mark">◆ MetricMind</span><span class="tag">dashboard</span></div>
+  <div id="status" class="offline">
+    <input id="apiInput" type="text" value="http://localhost:8000" spellcheck="false">
+    <span id="statusText"><span class="dot"></span>checking…</span>
+  </div>
+</div>
+
+<div id="controls">
+  <select id="metric1"></select>
+  <select id="metric2"></select>
+  <select id="dimension"></select>
+  <button id="refreshBtn">REFRESH</button>
+</div>
+
+<div id="kpiRow"></div>
+
+<div id="grid">
+  <div class="card">
+    <h2 id="barTitle">Metric by dimension</h2>
+    <div class="chartWrap"><canvas id="barChart"></canvas></div>
+    <div class="demoflag" id="barFlag" style="display:none">⟡ simulated data — connect your API for live numbers</div>
+  </div>
+  <div class="card">
+    <h2 id="donutTitle">Share of total</h2>
+    <div class="chartWrap"><canvas id="donutChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2 id="pieTitle">Distribution</h2>
+    <div class="chartWrap"><canvas id="pieChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2 id="bar2Title">Comparison</h2>
+    <div class="chartWrap"><canvas id="bar2Chart"></canvas></div>
+  </div>
+</div>
+
+<script>
+const DEMO_METRICS = ['revenue','orders','aov','margin','churn'];
+const DEMO_DIMENSIONS = ['region','product','channel','month'];
+const PALETTE = ['#e8b84b','#7c6ff0','#5ec9b8','#e0654f','#c9a6e8','#6fa8dc'];
+
+const CHART_JS_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js',
+  'https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js'
+];
+
+function loadChartJs(sources, i){
+  return new Promise((resolve, reject) => {
+    if(i >= sources.length){ reject(new Error('all CDNs failed')); return; }
+    const s = document.createElement('script');
+    s.src = sources[i];
+    s.onload = () => resolve();
+    s.onerror = () => loadChartJs(sources, i+1).then(resolve, reject);
+    document.head.appendChild(s);
+  });
+}
+
+let state = { metrics: [], dimensions: [], demo: true };
+let charts = {};
+
+const $ = id => document.getElementById(id);
+const apiInput = $('apiInput'), statusEl = $('status'), statusText = $('statusText');
+const metric1Sel = $('metric1'), metric2Sel = $('metric2'), dimSel = $('dimension');
+
+function apiBase(){ return apiInput.value.replace(/\/$/, ''); }
+
+async function checkConnection(){
+  try{
+    const res = await fetch(apiBase() + '/', {signal: AbortSignal.timeout(2500)});
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    state.metrics = data.metrics || DEMO_METRICS;
+    state.dimensions = data.dimensions || DEMO_DIMENSIONS;
+    state.demo = false;
+    statusEl.className = 'connected';
+    statusText.innerHTML = '<span class="dot"></span>connected';
+  }catch(e){
+    state.metrics = DEMO_METRICS;
+    state.dimensions = DEMO_DIMENSIONS;
+    state.demo = true;
+    statusEl.className = 'demo';
+    statusText.innerHTML = '<span class="dot"></span>demo mode (no API reached)';
+  }
+  populateControls();
+  loadAll();
+}
+
+function populateControls(){
+  metric1Sel.innerHTML = state.metrics.map(m => `<option value="${m}">${m}</option>`).join('');
+  metric2Sel.innerHTML = state.metrics.map(m => `<option value="${m}">${m}</option>`).join('');
+  if(state.metrics[1]) metric2Sel.value = state.metrics[1];
+  dimSel.innerHTML = state.dimensions.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function demoRows(dim){
+  const labels = dim === 'month'
+    ? ['Jan','Feb','Mar','Apr','May','Jun']
+    : dim === 'channel' ? ['Web','App','Retail','Partner']
+    : dim === 'product' ? ['Plan A','Plan B','Plan C']
+    : ['North','South','East','West'];
+  return labels.map(l => ({ [dim]: l, value: Math.round(Math.random()*80000 + 15000) }));
+}
+
+async function fetchMetric(metric, groupBy, region){
+  if(state.demo) return { rows: demoRows(groupBy), demo:true };
+  const params = new URLSearchParams();
+  if(groupBy) params.set('group_by', groupBy);
+  if(region) params.set('region', region);
+  const res = await fetch(`${apiBase()}/metrics/${metric}?${params.toString()}`);
+  const data = await res.json();
+  const rows = (data.data || []).map(r => {
+    const keys = Object.keys(r);
+    const dimKey = keys.find(k => k !== metric) || groupBy;
+    return { [groupBy]: r[dimKey], value: r[metric] ?? r[Object.keys(r).find(k=>k!==dimKey)] };
+  });
+  return { rows, demo:false };
+}
+
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+function renderKPIs(rowsByMetric){
+  const row = $('kpiRow');
+  row.innerHTML = '';
+  state.metrics.slice(0,5).forEach(m => {
+    const rows = rowsByMetric[m] || [];
+    const total = rows.reduce((s,r) => s + (Number(r.value)||0), 0);
+    const div = document.createElement('div');
+    div.className = 'kpi';
+    div.innerHTML = `<div class="label">${m}</div><div class="value">${total.toLocaleString()}</div>`;
+    row.appendChild(div);
+  });
+}
+
+function renderBar(canvasId, rows, dim, label){
+  destroyChart(canvasId);
+  const ctx = $(canvasId).getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: rows.map(r=>r[dim]), datasets:[{ label, data: rows.map(r=>r.value), backgroundColor: PALETTE[0], borderRadius:6 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.05)'}} } }
+  });
+}
+
+function renderBar2(canvasId, rows, dim, label){
+  destroyChart(canvasId);
+  const ctx = $(canvasId).getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: rows.map(r=>r[dim]), datasets:[{ label, data: rows.map(r=>r.value), backgroundColor: PALETTE[1], borderRadius:6 }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.05)'}}, y:{grid:{display:false}} } }
+  });
+}
+
+function renderDonut(canvasId, rows, dim){
+  destroyChart(canvasId);
+  const ctx = $(canvasId).getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels: rows.map(r=>r[dim]), datasets:[{ data: rows.map(r=>r.value), backgroundColor: PALETTE, borderColor: '#12151c', borderWidth:2 }]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}} }
+  });
+}
+
+function renderPie(canvasId, rows, dim){
+  destroyChart(canvasId);
+  const ctx = $(canvasId).getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type:'pie',
+    data:{ labels: rows.map(r=>r[dim]), datasets:[{ data: rows.map(r=>r.value), backgroundColor: PALETTE, borderColor: '#12151c', borderWidth:2 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}} }
+  });
+}
+
+async function loadAll(){
+  const m1 = metric1Sel.value || state.metrics[0];
+  const m2 = metric2Sel.value || state.metrics[1] || state.metrics[0];
+  const dim = dimSel.value || state.dimensions[0];
+
+  const [r1, r2] = await Promise.all([ fetchMetric(m1, dim), fetchMetric(m2, dim) ]);
+
+  $('barTitle').textContent = `${m1} by ${dim}`;
+  $('donutTitle').textContent = `${m1} share by ${dim}`;
+  $('pieTitle').textContent = `${m2} distribution by ${dim}`;
+  $('bar2Title').textContent = `${m2} by ${dim}`;
+  $('barFlag').style.display = r1.demo ? 'block' : 'none';
+
+  renderBar('barChart', r1.rows, dim, m1);
+  renderDonut('donutChart', r1.rows, dim);
+  renderPie('pieChart', r2.rows, dim);
+  renderBar2('bar2Chart', r2.rows, dim, m2);
+
+  const rowsByMetric = {};
+  for(const m of state.metrics.slice(0,5)){
+    rowsByMetric[m] = m === m1 ? r1.rows : m === m2 ? r2.rows : (await fetchMetric(m, dim)).rows;
+  }
+  renderKPIs(rowsByMetric);
+}
+
+$('refreshBtn').addEventListener('click', loadAll);
+metric1Sel.addEventListener('change', loadAll);
+metric2Sel.addEventListener('change', loadAll);
+dimSel.addEventListener('change', loadAll);
+apiInput.addEventListener('change', checkConnection);
+
+loadChartJs(CHART_JS_SOURCES, 0)
+  .then(() => {
+    Chart.defaults.color = '#868c9c';
+    Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    checkConnection();
+  })
+  .catch(() => {
+    statusText.innerHTML = '<span class="dot"></span>chart library failed to load';
+    $('kpiRow').innerHTML = '<div style="color:var(--muted);font-family:\'Space Mono\',monospace;font-size:12px;">Could not load Chart.js from any CDN — check your network/ad-block settings and reload.</div>';
+  });
+</script>
+</body>
+</html>
