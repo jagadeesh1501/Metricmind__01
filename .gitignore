@@ -1,32 +1,20 @@
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-
-# Virtual environment
-venv/
 .venv/
-env/
+venv/
 
-# Environment variables
-.env
-
-# DuckDB
+# Database
 *.duckdb
-*.wal
+*.duckdb.wal
 
-# Node.js
+# Frontend
 node_modules/
-npm-debug.log*
-
-# Next.js
 .next/
-out/
 
-# VS Code
+# IDE
 .vscode/
-
-# OS files
-.DS_Store
-Thumbs.db

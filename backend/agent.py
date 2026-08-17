@@ -9,13 +9,22 @@ rule-based planner so the whole pipeline still runs end-to-end for free.
 """
 import os
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from semantic_layer import METRICS, DIMENSIONS, build_query
 
-USE_LLM = bool(os.getenv("OPENAI_API_KEY"))
+USE_LLM = bool(os.getenv("GROQ_API_KEY"))
 
 if USE_LLM:
     from langchain_openai import ChatOpenAI
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(
+        model="llama-3.3-70b-versatile",
+        temperature=0,
+        api_key=os.getenv("GROQ_API_KEY"),
+        base_url="https://api.groq.com/openai/v1",
+    )
 
 
 PLAN_PROMPT = """You are a query planner for a business intelligence system.
@@ -61,20 +70,15 @@ def ask_metricmind(question: str, con) -> dict:
     Step-by-step agent loop:
     1. Plan  2. Compile SQL  3. Execute  4. Self-check  5. Explain
     """
-    # 1. Plan (structured intent, not SQL)
     plan = plan_with_llm(question) if USE_LLM else plan_with_rules(question)
 
-    # 2. Compile SQL from the governed semantic layer only
     sql = build_query(plan["metric"], plan.get("filters"), plan.get("group_by"))
 
-    # 3. Execute
     result = con.execute(sql).fetchdf()
 
-    # 4. Self-check
     if result.empty:
         return {"plan": plan, "sql": sql, "result": [], "answer": "No data found for that question."}
 
-    # 5. Explain (LLM if available, else a plain templated summary)
     if USE_LLM:
         explain_prompt = f"Explain this business result in 2 sentences for an executive: {result.to_dict('records')}"
         answer = llm.invoke(explain_prompt).content

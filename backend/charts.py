@@ -1,19 +1,33 @@
 """
-Step 4 — Data Visualization layer (Plotly, feeding ECharts-style JSON to the frontend)
-Converts a query result into chart-ready JSON so Next.js/Tremor/ECharts can render it
-without needing to know anything about SQL or DuckDB.
+Step 4 — Data Visualization layer (ECharts, matching the official brief)
+Converts a query result into an ECharts `option` object (as JSON) so the
+Next.js frontend can render it directly with echarts-for-react.
 """
-import plotly.express as px
-import pandas as pd
 
 
 def make_chart_json(rows: list[dict], metric: str, x_field: str = "quarter"):
-    """Builds a simple line/bar chart and returns Plotly figure JSON (frontend-ready)."""
+    """Builds an ECharts option config and returns it as a dict (frontend-ready)."""
     if not rows:
         return None
-    df = pd.DataFrame(rows)
-    if x_field in df.columns:
-        fig = px.line(df, x=x_field, y=metric, markers=True, title=metric.replace("_", " ").title())
-    else:
-        fig = px.bar(df, y=metric, title=metric.replace("_", " ").title())
-    return fig.to_json()
+
+    has_x = x_field in rows[0]
+    categories = [str(r[x_field]) for r in rows] if has_x else [str(i) for i in range(len(rows))]
+    values = [r[metric] for r in rows]
+
+    option = {
+        "title": {"text": metric.replace("_", " ").title(), "textStyle": {"fontSize": 13}},
+        "grid": {"left": 50, "right": 24, "top": 50, "bottom": 40, "containLabel": True},
+        "tooltip": {"trigger": "axis"},
+        "xAxis": {"type": "category", "data": categories, "name": x_field if has_x else "index"},
+        "yAxis": {"type": "value"},
+        "series": [
+            {
+                "data": values,
+                "type": "line" if has_x and len(rows) > 1 else "bar",
+                "smooth": True,
+                "symbolSize": 8,
+                "barWidth": 40,
+            }
+        ],
+    }
+    return option

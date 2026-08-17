@@ -3,6 +3,13 @@ Step 5 — REST API layer (FastAPI)
 Exposes the semantic layer + agent to any frontend (Next.js, Streamlit, curl, etc.)
 Run with:  uvicorn main:app --reload
 """
+import os
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+load_dotenv(dotenv_path=env_path)
+
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
