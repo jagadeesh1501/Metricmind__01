@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MetricMind — Agentic Semantic BI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="brand">
+        <span class="dot"></span>
+        <h1>MetricMind</h1>
+        <span class="tag">Agentic Semantic BI Engine</span>
+      </div>
+      <nav>
+        <button class="tab-btn active" data-tab="chat">Chat</button>
+        <button class="tab-btn" data-tab="dashboard">3D Dashboard</button>
+        <button class="tab-btn" data-tab="charts">Chart Gallery</button>
+        <button class="tab-btn" data-tab="metrics">Semantic Layer</button>
+      </nav>
+      <div id="health-badge" class="badge">connecting…</div>
+    </header>
+
+    <main>
+      <!-- CHAT TAB -->
+      <section id="tab-chat" class="tab-panel active">
+        <div class="chat-shell">
+          <div id="chat-log" class="chat-log">
+            <div class="msg agent">
+              <div class="bubble">
+                Ask me a business question — e.g.
+                <button class="suggestion" data-q="Why did our European margins drop last quarter?">Why did our European margins drop last quarter?</button>
+                <button class="suggestion" data-q="What is our global revenue this quarter?">What is our global revenue this quarter?</button>
+                <button class="suggestion" data-q="Show me the churn trend for Enterprise customers">Show me the churn trend for Enterprise customers</button>
+                <button class="suggestion" data-q="What is our customer NPS score?">What is our customer NPS score? (ungoverned — try it)</button>
+              </div>
+            </div>
+          </div>
+          <form id="chat-form" class="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask MetricMind about revenue, margin, churn…" autocomplete="off" />
+            <button type="submit">Ask</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 3D DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-panel">
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Revenue — Region × Product Category × Quarter</h3>
+            <div id="plot-cube" class="plot"></div>
+          </div>
+          <div class="panel">
+            <h3>Gross Margin % Surface — Region × Quarter</h3>
+            <div id="plot-surface" class="plot"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHART GALLERY TAB -->
+      <section id="tab-charts" class="tab-panel">
+        <div id="chart-gallery" class="chart-gallery"></div>
+      </section>
+
+      <!-- SEMANTIC LAYER TAB -->
+      <section id="tab-metrics" class="tab-panel">
+        <table id="metrics-table">
+          <thead><tr><th>Metric</th><th>Unit</th><th>Description</th><th>Direction</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
