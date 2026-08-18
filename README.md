@@ -17,6 +17,11 @@ metricmind/
     └── app/page.tsx          # Step 6: Conversational BI UI (Next.js)
 ```
 
+## Project Workflow
+
+The system processes business questions through the semantic layer, generates governed SQL, and returns the results through the conversational BI interface.
+
+
 ## How to run
 
 ### 1. Backend
